@@ -1,0 +1,35 @@
+# main.py
+
+from models.gan_module import NCDAutoGAN
+from models.transformer_module import NCDTransformer
+from models.diffusion_module import DiffusionImputer
+from utils.explainability_tools import explain_model
+from data.data_preprocessing import load_preprocessed_data
+
+
+def main():
+    print("Loading data...")
+    X_train, X_test, y_train, y_test = load_preprocessed_data()
+
+    print("Training GAN to generate synthetic data...")
+    gan = NCDAutoGAN()
+    gan.train(X_train)
+    synthetic_data = gan.generate_samples(n_samples=100)
+
+    print("Imputing missing values using diffusion model...")
+    imputer = DiffusionImputer()
+    X_train_imputed = imputer.impute(X_train)
+
+    print("Training transformer for NCD prediction...")
+    transformer = NCDTransformer()
+    transformer.train(X_train_imputed, y_train)
+    predictions = transformer.predict(X_test)
+
+    print("Explaining predictions...")
+    explain_model(transformer.model, X_test)
+
+    print("Pipeline completed successfully.")
+
+
+if __name__ == '__main__':
+    main()
